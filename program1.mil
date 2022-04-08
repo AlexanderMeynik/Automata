@@ -1,0 +1,21 @@
+BEGIN
+        N := READ;
+        P := READ;
+		RES := 1;
+		MOD := 0;
+
+        WHILE P > 0 DO
+				MOD := P/2;
+				MOD := P - MOD*2;
+				if MOD = 0 THEN
+					P := P/2;
+					N :=N*N	
+				else
+					P := P-1;
+					RES := RES*N
+				fi
+
+        OD;
+
+        WRITE(RES)
+END

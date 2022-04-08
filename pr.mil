@@ -1,0 +1,8 @@
+BEGIN
+	c := 65;
+	co := 0;
+	WHILE co <= 25 DO
+		writec(c+co);
+		co:=co+1
+	OD
+END

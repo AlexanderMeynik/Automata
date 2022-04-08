@@ -1,0 +1,3 @@
+0:	INPUT
+1:	PRINT	4
+2:	STOP

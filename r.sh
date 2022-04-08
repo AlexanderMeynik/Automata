@@ -1,0 +1,1 @@
+./apps/mvm.exe res/$1.ms

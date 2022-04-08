@@ -1,0 +1,12 @@
+BEGIN
+        N1 := READ;
+        WHILE N1 > 0 DO
+				
+				if N1>5 THEN
+					WRITE(N1-5)
+				else
+					WRITE(N1)		
+				fi;
+				N1 := READ
+        OD
+END
