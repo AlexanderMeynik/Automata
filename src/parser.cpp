@@ -43,11 +43,49 @@ void Parser::statement()
 	// Следующей лексемой должно быть присваивание. Затем идет блок expression, который возвращает значение на вершину стека.
 	// Записываем это значение по адресу нашей переменной
 	if(see(T_IDENTIFIER)) {
-		int varAddress = findOrAddVariable(scanner_->getStringValue());
-		next();
-		mustBe(T_ASSIGN);
-		expression();
-		codegen_->emit(STORE, varAddress);
+    int varAddress = findOrAddVariable(scanner_->getStringValue());
+    next();
+    if (!see(T_ASSIGN)) {
+      mustBe(T_LSQRPAREN);
+
+      expression();
+      int newAddr = findOrAddVariable("i1");
+      codegen_->emit(STORE, newAddr);
+      //codegen_->emit(STORE, newAddr+1);
+      //codegen_->emit(LOAD, newAddr+1);
+      mustBe(T_RSQRPAREN);
+      mustBe(T_ASSIGN);
+      expression();
+      codegen_->emit(LOAD, newAddr);
+      codegen_->emit(BSTORE, varAddress+1);
+    }
+    else
+    {
+
+
+    mustBe(T_ASSIGN);
+    //printf("%d\n",scanner_->getIntValue());
+    if (see(T_STRING)) {
+      string name = scanner_->getStringValue();
+      int size = scanner_->getIntValue();
+      codegen_->emit(PUSH, size);
+      codegen_->emit(STORE, varAddress);
+      string buf = scanner_->getSStringValue();
+
+      for (int i = 0; i < size; i++) {
+        codegen_->emit(PUSH, buf[i]);
+        codegen_->emit(STORE, varAddress + i + 1);
+        findOrAddVariable(name + std::to_string(i) + name);
+      }
+      next();
+
+
+    } else {
+      //TODO добавить сюда
+      expression();
+      codegen_->emit(STORE, varAddress);
+    }
+  }
 	}
 	// Если встретили IF, то затем должно следовать условие. На вершине стека лежит 1 или 0 в зависимости от выполнения условия.
 	// Затем зарезервируем место для условного перехода JUMP_NO к блоку ELSE (переход в случае ложного условия). Адрес перехода
@@ -199,9 +237,17 @@ void Parser::factor()
 		//Если встретили число, то преобразуем его в целое и записываем на вершину стека
 	}
 	else if(see(T_IDENTIFIER)) {
+
 		int varAddress = findOrAddVariable(scanner_->getStringValue());
 		next();
-		codegen_->emit(LOAD, varAddress);
+    if (match(T_LSQRPAREN)) {
+      expression();
+      mustBe(T_RSQRPAREN);
+      codegen_->emit(BLOAD, varAddress+1);
+    }
+    else {
+      codegen_->emit(LOAD, varAddress);
+    }
 		//Если встретили переменную, то выгружаем значение, лежащее по ее адресу, на вершину стека 
 	}
 	else if(see(T_ADDOP) && scanner_->getArithmeticValue() == A_MINUS) {

@@ -12,6 +12,8 @@ OBJS	= main.o \
 	  
 EXE	= cmilan
 
+all:$(EXE)
+
 $(EXE): $(OBJS) $(HEADERS)
 	$(CXX) $(LDFLAGS) -o $@ $(OBJS)
 

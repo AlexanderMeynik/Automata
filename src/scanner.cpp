@@ -35,7 +35,7 @@ static const char * tokenNames_[] = {
 	"';'",
 	"'['",
 	"']'",
-	"'string'",
+	"string"
 };
 
 void Scanner::nextToken()
@@ -120,18 +120,20 @@ void Scanner::nextToken()
 	{
 		string buffer;
 		int size=0;
+		nextChar();
 		while(ch_!='"'&&size<41) {
 			buffer += ch_;
 			size++;
 			nextChar();
 		}
+		nextChar();
 		if(size==41)
 		{
+
 			token_ = T_ILLEGAL;
 		}
 		else
 		{
-			transform(buffer.begin(), buffer.end(), buffer.begin(), ::tolower);
 			token_ = T_STRING;
 			sstringValue_ = buffer;
 			intValue_=size;

@@ -122,6 +122,11 @@ public:
 	{
 		return stringValue_;
 	}
+
+	string getSStringValue() const
+	{
+		return sstringValue_;
+	}
 	
 	Cmp getCmpValue() const
 	{
