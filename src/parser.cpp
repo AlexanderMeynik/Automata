@@ -74,17 +74,32 @@ void Parser::statement()
       {
         string name = scanner_->getStringValue();
         int size = scanner_->getIntValue();
-        codegen_->emit(PUSH, size);
-        codegen_->emit(STORE, varAddress);
+        int firstsize = findOrAddString(varAddress, size);
         string buf = scanner_->getSStringValue();
-
-        for (int i = 0; i < size; i++)
+        if (firstsize < size)
         {
-          codegen_->emit(PUSH, buf[i]);
-          codegen_->emit(STORE, varAddress + i + 1);
-          findOrAddVariable(name + std::to_string(i) + name);
+          reportError("string " + buf + " is too big to be placed in variable \"" + name + "\" with size =" + std::to_string(firstsize));
+          recover(T_STRING);
         }
-        next();
+        else
+        {
+
+          codegen_->emit(PUSH, size);
+          codegen_->emit(STORE, varAddress);
+
+          for (int i = 0; i < size; i++)
+          {
+            codegen_->emit(PUSH, buf[i]);
+            codegen_->emit(STORE, varAddress + i + 1);
+            findOrAddVariable(name + std::to_string(i) + name);
+          }
+          for (int i = size; i < firstsize; i++)
+          {
+            codegen_->emit(PUSH, 0);
+            codegen_->emit(STORE, varAddress + i + 1);
+          }
+          next();
+        }
       }
       else
       {
@@ -94,9 +109,9 @@ void Parser::statement()
       }
     }
   }
-    // Если встретили IF, то затем должно следовать условие. На вершине стека лежит 1 или 0 в зависимости от выполнения условия.
-    // Затем зарезервируем место для условного перехода JUMP_NO к блоку ELSE (переход в случае ложного условия). Адрес перехода
-    // станет известным только после того, как будет сгенерирован код для блока THEN.
+  // Если встретили IF, то затем должно следовать условие. На вершине стека лежит 1 или 0 в зависимости от выполнения условия.
+  // Затем зарезервируем место для условного перехода JUMP_NO к блоку ELSE (переход в случае ложного условия). Адрес перехода
+  // станет известным только после того, как будет сгенерирован код для блока THEN.
   else if (match(T_IF))
   {
     relation();
@@ -316,30 +331,30 @@ void Parser::relation()
     expression();
     switch (cmp)
     {
-      //для знака "=" - номер 0
-      case C_EQ:
-        codegen_->emit(COMPARE, 0);
-        break;
-        //для знака "!=" - номер 1
-      case C_NE:
-        codegen_->emit(COMPARE, 1);
-        break;
-        //для знака "<" - номер 2
-      case C_LT:
-        codegen_->emit(COMPARE, 2);
-        break;
-        //для знака ">" - номер 3
-      case C_GT:
-        codegen_->emit(COMPARE, 3);
-        break;
-        //для знака "<=" - номер 4
-      case C_LE:
-        codegen_->emit(COMPARE, 4);
-        break;
-        //для знака ">=" - номер 5
-      case C_GE:
-        codegen_->emit(COMPARE, 5);
-        break;
+    //для знака "=" - номер 0
+    case C_EQ:
+      codegen_->emit(COMPARE, 0);
+      break;
+      //для знака "!=" - номер 1
+    case C_NE:
+      codegen_->emit(COMPARE, 1);
+      break;
+      //для знака "<" - номер 2
+    case C_LT:
+      codegen_->emit(COMPARE, 2);
+      break;
+      //для знака ">" - номер 3
+    case C_GT:
+      codegen_->emit(COMPARE, 3);
+      break;
+      //для знака "<=" - номер 4
+    case C_LE:
+      codegen_->emit(COMPARE, 4);
+      break;
+      //для знака ">=" - номер 5
+    case C_GE:
+      codegen_->emit(COMPARE, 5);
+      break;
     };
   }
   else
@@ -355,6 +370,20 @@ int Parser::findOrAddVariable(const string &var)
   {
     variables_[var] = lastVar_;
     return lastVar_++;
+  }
+  else
+  {
+    return it->second;
+  }
+}
+
+int Parser::findOrAddString(const int &adress, const int &size)
+{
+  auto it = strings_.find(adress);
+  if (it == strings_.end())
+  {
+    strings_[adress] = size;
+    return size;
   }
   else
   {

@@ -106,15 +106,16 @@ private:
 	//пока не встретим эту лексему или лексему конца файла.
 	int findOrAddVariable(const string&); //функция пробегает по variables_. 
 	//Если находит нужную переменную - возвращает ее номер, иначе добавляет ее в массив, увеличивает lastVar и возвращает его.
-
+	int findOrAddString(const int &adress,const int &size);
 	Scanner* scanner_; //лексический анализатор для конструктора
 	CodeGen* codegen_; //указатель на виртуальную машину
 	ostream& output_; //выходной поток (в данном случае используем cout)
 	bool error_; //флаг ошибки. Используется чтобы определить, выводим ли список команд после разбора или нет
 	bool recovered_; //не используется
 	VarTable variables_; //массив переменных, найденных в программе
-	
+	std::map<int,int> strings_;
 	int lastVar_; //номер последней записанной переменной
+	int lastStrVal_=0;
 };
 
 #endif

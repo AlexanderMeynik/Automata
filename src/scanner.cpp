@@ -130,7 +130,6 @@ void Scanner::nextToken()
     nextChar();
     if(size==41)
     {
-
       token_ = T_ILLEGAL;
     }
     else

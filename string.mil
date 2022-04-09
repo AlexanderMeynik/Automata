@@ -1,14 +1,11 @@
 BEGIN
-	a := "ABCDE";
-	f:=0;
-	while f<a do
-	a[f]:=READ;
-	f:=f+1
-	od;
-	f:=0;
-
-	while f<a do
-	    writecno(a[f]);
-	    f:=f+1
+	a := "ABC";
+	write(a);
+	a:="AB";
+	c:=0;
+	a := "ABG";
+	while c<a do
+		writecno(a[c]);
+		c:=c+1
 	od
 END
