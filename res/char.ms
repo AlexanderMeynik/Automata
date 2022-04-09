@@ -1,0 +1,5 @@
+0:	PUSH	65
+1:	STORE	0
+2:	LOAD	0
+3:	PRINT	5
+4:	STOP

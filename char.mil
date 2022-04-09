@@ -1,0 +1,4 @@
+BEGIN
+	a := 'A';
+	writecno(a)
+END

@@ -139,16 +139,39 @@ void vm_store(unsigned int address, int word)
 
 int vm_read()
 {
+        char buff[40];
         int n;
 
+        fprintf(stderr, "> "); fflush(stdout);
+
+        scanf("%s",buff);
+        if(sscanf(buff,"%d", &n))
+        {
+                return n;
+        }
+        else
+        {
+            n=buff[0];
+            if(n<0||n>256)
+            {
+                vm_error(BAD_INPUT);
+                return 0;
+            }
+            else
+            {
+              return n;
+            }
+        }
+        /*
 	fprintf(stderr, "> "); fflush(stdout);
         if(scanf("%d", &n)) {
                 return n;
         }
+
         else {
                 vm_error(BAD_INPUT);
                 return 0;
-        }
+        }*/
 }
 
 void vm_write(int n, int arg)
