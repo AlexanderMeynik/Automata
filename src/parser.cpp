@@ -105,7 +105,22 @@ void Parser::statement()
       {
         // TODO добавить сюда
         expression();
-        codegen_->emit(STORE, varAddress);
+        int firstsize = findString(varAddress);
+        if (firstsize)
+        {
+          codegen_->emit(STORE, varAddress + 1);
+          codegen_->emit(PUSH, 1);
+          codegen_->emit(STORE, varAddress);
+          for (int i = 1; i < firstsize; i++)
+          {
+            codegen_->emit(PUSH, 0);
+            codegen_->emit(STORE, varAddress + i + 1);
+          }
+        }
+        else
+        {
+          codegen_->emit(STORE, varAddress);
+        }
       }
     }
   }
@@ -284,9 +299,18 @@ void Parser::factor()
     next();
     if (match(T_LSQRPAREN))
     {
-      expression();
-      mustBe(T_RSQRPAREN);
-      codegen_->emit(BLOAD, varAddress + 1);
+      if (!findString(varAddress))
+      {
+        reportError("You can't use [ ] operator on non string variable \"");
+        recover(T_RSQRPAREN);
+      }
+      else
+      {
+
+        expression();
+        mustBe(T_RSQRPAREN);
+        codegen_->emit(BLOAD, varAddress + 1);
+      }
     }
     else
     {
@@ -384,6 +408,19 @@ int Parser::findOrAddString(const int &adress, const int &size)
   {
     strings_[adress] = size;
     return size;
+  }
+  else
+  {
+    return it->second;
+  }
+}
+
+int Parser::findString(const int &adress)
+{
+  auto it = strings_.find(adress);
+  if (it == strings_.end())
+  {
+    return 0;
   }
   else
   {

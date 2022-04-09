@@ -2,10 +2,15 @@ BEGIN
 	a := "ABC";
 	write(a);
 	a:="AB";
+	a:=1;
+	write(a[0]);
 	c:=0;
 	a := "ABG";
 	while c<a do
 		writecno(a[c]);
 		c:=c+1
-	od
+	od;
+	b:=3;
+	write(b);
+	write(b[-4])
 END

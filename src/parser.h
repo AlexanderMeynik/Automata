@@ -107,6 +107,7 @@ private:
 	int findOrAddVariable(const string&); //функция пробегает по variables_. 
 	//Если находит нужную переменную - возвращает ее номер, иначе добавляет ее в массив, увеличивает lastVar и возвращает его.
 	int findOrAddString(const int &adress,const int &size);
+	int findString(const int &adress);
 	Scanner* scanner_; //лексический анализатор для конструктора
 	CodeGen* codegen_; //указатель на виртуальную машину
 	ostream& output_; //выходной поток (в данном случае используем cout)
