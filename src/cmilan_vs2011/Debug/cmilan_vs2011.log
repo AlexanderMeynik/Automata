@@ -1,2 +1,0 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(494,5): warning MSB8003: свойство VCToolsInstallDir не определено. Возможно, не найдены некоторые средства сборки.
-TRACKER : error TRK0005: не удалось обнаружить "CL.exe". Не удается найти указанный файл.
