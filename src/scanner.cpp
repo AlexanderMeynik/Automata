@@ -5,7 +5,7 @@
 
 using namespace std;
 
-static const char * tokenNames_[] = {
+static const char *tokenNames_[] = {
     "end of file",
     "illegal token",
     "identifier",
@@ -36,40 +36,40 @@ static const char * tokenNames_[] = {
     "'['",
     "']'",
     "string",
-    "symbol"
+    "symbol",
+    "quote",
+    "double quotes"
 };
 
-void Scanner::nextToken()
-{
+void Scanner::nextToken() {
   skipSpace();
 
   // Пропускаем комментарии
   // Если встречаем "/", то за ним должна идти "*". Если "*" не встречена, считаем, что встретили операцию деления
   // и лексему - операция типа умножения. Дальше смотрим все символы, пока не находим звездочку или символ конца файла.
   // Если нашли * - проверяем на наличие "/" после нее. Если "/" не найден - ищем следующую "*".
-  while(ch_ == '/') {
+  while (ch_ == '/') {
     nextChar();
-    if(ch_ == '*') {
+    if (ch_ == '*') {
       nextChar();
       bool inside = true;
-      while(inside) {
-        while(ch_ != '*' && !input_.eof()) {
+      while (inside) {
+        while (ch_ != '*' && !input_.eof()) {
           nextChar();
         }
 
-        if(input_.eof()) {
+        if (input_.eof()) {
           token_ = T_EOF;
           return;
         }
 
         nextChar();
-        if(ch_ == '/') {
+        if (ch_ == '/') {
           inside = false;
           nextChar();
         }
       }
-    }
-    else {
+    } else {
       token_ = T_MULOP;
       arithmeticValue_ = A_DIVIDE;
       return;
@@ -79,16 +79,16 @@ void Scanner::nextToken()
   }
 
   //Если встречен конец файла, считаем за лексему конца файла.
-  if(input_.eof()) {
+  if (input_.eof()) {
     token_ = T_EOF;
     return;
   }
   //Если встретили цифру, то до тех пока дальше идут цифры - считаем как продолжение числа.
   //Запоминаем полученное целое, а за лексему считаем целочисленный литерал
 
-  if(isdigit(ch_)) {
+  if (isdigit(ch_)) {
     int value = 0;
-    while(isdigit(ch_)) {
+    while (isdigit(ch_)) {
       value = value * 10 + (ch_ - '0'); //поразрядное считывание, преобразуем символьное значение к числу.
       nextChar();
     }
@@ -99,9 +99,9 @@ void Scanner::nextToken()
     //Как только считали имя переменной, сравниваем ее со списком зарезервированных слов. Если не совпадает ни с одним из них,
     //считаем, что получили переменную, имя которой запоминаем, а за текущую лексему считаем лексему идентификатора.
     //Если совпадает с каким-либо словом из списка - считаем что получили лексему, соответствующую этому слову.
-  else if(isIdentifierStart(ch_)) {
+  else if (isIdentifierStart(ch_)) {
     string buffer;
-    while(isIdentifierBody(ch_)) {
+    while (isIdentifierBody(ch_)) {
       buffer += ch_;
       nextChar();
     }
@@ -109,63 +109,87 @@ void Scanner::nextToken()
     transform(buffer.begin(), buffer.end(), buffer.begin(), ::tolower);
 
     map<string, Token>::iterator kwd = keywords_.find(buffer);
-    if(kwd == keywords_.end()) {
+    if (kwd == keywords_.end()) {
       token_ = T_IDENTIFIER;
       stringValue_ = buffer;
-    }
-    else {
+    } else {
       token_ = kwd->second;
     }
-  }
-  else if(ch_=='"')
-  {
-    string buffer;
-    int size=0;
-    nextChar();
-    while(ch_!='"'&&size<41) {
-      buffer += ch_;
-      size++;
+  } else if (ch_ == '"') {
+    if (quotes_status == Q_DIN) {
+      string buffer;
+      int size = 0;
       nextChar();
-    }
-    nextChar();
-    if(size==41)
-    {
-      token_ = T_ILLEGAL;
-    }
-    else
-    {
+      while (isalnum(ch_) && size < 41) {
+        buffer += ch_;
+        size++;
+        nextChar();
+      }
+      //nextChar();
+      /*if (size == 41) {
+        token_ = T_ILLEGAL;
+      } else {
+        token_ = T_STRING;
+        sstringValue_ = buffer;
+        intValue_ = size;
+      }*/
       token_ = T_STRING;
       sstringValue_ = buffer;
-      intValue_=size;
-    }
-  }
-  else if(ch_==39)
-  {
-    int num=0;
-    //	int size=0;
-    nextChar();
-    if(ch_!=39)
-    {
-      num=ch_;
+      intValue_ = size;
+      quotes_status = Q_DEND;
+    } else if (quotes_status == Q_OUT) {
+      token_ = T_DQUOTE;
+      quotes_status = Q_DIN;
+    } else if (quotes_status == Q_DEND) {
+      token_ = T_DQUOTE;
+      quotes_status = Q_OUT;
       nextChar();
-    }
-    else{
-      num=0;
-    }
-    if(ch_!=39)
-    {
+    } else if (quotes_status == Q_END) {
+      token_ = T_DQUOTE;
+      quotes_status = Q_OUT;
+      nextChar();
+    } else {
       token_ = T_ILLEGAL;
     }
-    else
-    {
+  } else if (ch_ == 39) {
+    if (quotes_status == Q_IN) {
+      int num = 0;
+      //	int size=0;
+      nextChar();
+      if (ch_ != 39) {
+        num = ch_;
+        nextChar();
+      } else {
+        num = 0;
+      }
+      /*if (ch_ != 39) {
+        token_ = T_ILLEGAL;
+      } else {
+        token_ = T_CHAR;
+        intValue_ = num;
+      }
+      nextChar();*/
       token_ = T_CHAR;
-      intValue_=num;
+      intValue_ = num;
+      quotes_status = Q_END;
+    } else if (quotes_status == Q_OUT) {
+      token_ = T_QUOTE;
+      quotes_status = Q_IN;
+    } else if (quotes_status == Q_END) {
+      token_ = T_QUOTE;
+      quotes_status = Q_OUT;
+      nextChar();
+    } else if (quotes_status == Q_DEND) {
+      token_ = T_QUOTE;
+      quotes_status = Q_OUT;
+      nextChar();
+    } else {
+      token_ = T_ILLEGAL;
     }
-    nextChar();
   }
     //Символ не является буквой, цифрой, "/" или признаком конца файла
   else {
-    switch(ch_) {
+    switch (ch_) {
       //Признак лексемы открывающей скобки - встретили "("
       case '(':
         token_ = T_LPAREN;
@@ -185,12 +209,11 @@ void Scanner::nextToken()
         //Иначе - лексема ошибки.
       case ':':
         nextChar();
-        if(ch_ == '=') {
+        if (ch_ == '=') {
           token_ = T_ASSIGN;
           nextChar();
 
-        }
-        else {
+        } else {
           token_ = T_ILLEGAL;
         }
         break;
@@ -198,11 +221,10 @@ void Scanner::nextToken()
       case '<':
         token_ = T_CMP;
         nextChar();
-        if(ch_ == '=') {
+        if (ch_ == '=') {
           cmpValue_ = C_LE;
           nextChar();
-        }
-        else {
+        } else {
           cmpValue_ = C_LT;
         }
         break;
@@ -210,11 +232,10 @@ void Scanner::nextToken()
       case '>':
         token_ = T_CMP;
         nextChar();
-        if(ch_ == '=') {
+        if (ch_ == '=') {
           cmpValue_ = C_GE;
           nextChar();
-        }
-        else {
+        } else {
           cmpValue_ = C_GT;
         }
         break;
@@ -222,12 +243,11 @@ void Scanner::nextToken()
         //и знак "!=" иначе считаем, что у нас лексема ошибки
       case '!':
         nextChar();
-        if(ch_ == '=') {
+        if (ch_ == '=') {
           nextChar();
           token_ = T_CMP;
           cmpValue_ = C_NE;
-        }
-        else {
+        } else {
           token_ = T_ILLEGAL;
         }
         break;
@@ -273,10 +293,9 @@ void Scanner::nextToken()
   }
 }
 
-void Scanner::skipSpace()
-{
-  while(isspace(ch_)) {
-    if(ch_ == '\n') {
+void Scanner::skipSpace() {
+  while (isspace(ch_)) {
+    if (ch_ == '\n') {
       ++lineNumber_;
     }
 
@@ -284,13 +303,11 @@ void Scanner::skipSpace()
   }
 }
 
-void Scanner::nextChar()
-{
+void Scanner::nextChar() {
   ch_ = input_.get();
 }
 
-const char * tokenToString(Token t)
-{
+const char *tokenToString(Token t) {
   return tokenNames_[t];
 }
 

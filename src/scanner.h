@@ -8,72 +8,81 @@
 using namespace std;
 
 enum Token {
-  T_EOF,			// Конец текстового потока
-  T_ILLEGAL,		// Признак недопустимого символа
-  T_IDENTIFIER,		// Идентификатор
-  T_NUMBER,		// Целочисленный литерал
-  T_BEGIN,		// Ключевое слово "begin"
-  T_END,			// Ключевое слово "end"
-  T_IF,			// Ключевое слово "if"
-  T_THEN,			// Ключевое слово "then"
-  T_ELSE,			// Ключевое слово "else"
-  T_FI,			// Ключевое слово "fi"
-  T_WHILE,		// Ключевое слово "while"
-  T_DO,			// Ключевое слово "do"
-  T_OD,			// Ключевое слово "od"
-  T_WRITE,		// Ключевое слово "write"
+  T_EOF,      // Конец текстового потока
+  T_ILLEGAL,    // Признак недопустимого символа
+  T_IDENTIFIER,    // Идентификатор
+  T_NUMBER,    // Целочисленный литерал
+  T_BEGIN,    // Ключевое слово "begin"
+  T_END,      // Ключевое слово "end"
+  T_IF,      // Ключевое слово "if"
+  T_THEN,      // Ключевое слово "then"
+  T_ELSE,      // Ключевое слово "else"
+  T_FI,      // Ключевое слово "fi"
+  T_WHILE,    // Ключевое слово "while"
+  T_DO,      // Ключевое слово "do"
+  T_OD,      // Ключевое слово "od"
+  T_WRITE,    // Ключевое слово "write"
   T_WRITET,
   T_WRITENO,
-  T_WRITEC,		// Ключевое слово "write"
+  T_WRITEC,
   T_WRITECT,
   T_WRITECNO,
-  T_READ,			// Ключевое слово "read"
-  T_ASSIGN,		// Оператор ":="
-  T_ADDOP,		// Сводная лексема для "+" и "-" (операция типа сложения)
-  T_MULOP,		// Сводная лексема для "*" и "/" (операция типа умножения)
-  T_CMP,			// Сводная лексема для операторов отношения
-  T_LPAREN,		// Открывающая скобка
-  T_RPAREN,		// Закрывающая скобка
-  T_SEMICOLON,		// ";"
-  T_LSQRPAREN,	// [
-  T_RSQRPAREN,		//}
-  T_STRING, 	//Лексема строки
-  T_CHAR
+  T_READ,      // Ключевое слово "read"
+  T_ASSIGN,    // Оператор ":="
+  T_ADDOP,    // Сводная лексема для "+" и "-" (операция типа сложения)
+  T_MULOP,    // Сводная лексема для "*" и "/" (операция типа умножения)
+  T_CMP,      // Сводная лексема для операторов отношения
+  T_LPAREN,    // Открывающая скобка
+  T_RPAREN,    // Закрывающая скобка
+  T_SEMICOLON,    // ";"
+  T_LSQRPAREN,  // [
+  T_RSQRPAREN,    //]
+  T_STRING,  //Лексема строки
+  T_CHAR,
+  T_QUOTE,
+  T_DQUOTE,
 };
 
 // Функция tokenToString возвращает описание лексемы.
 // Используется при печати сообщения об ошибке.
-const char * tokenToString(Token t);
+const char *tokenToString(Token t);
 
 // Виды операций сравнения
 enum Cmp {
   C_EQ,   // Операция сравнения "="
-  C_NE,	// Операция сравнения "!="
-  C_LT,	// Операция сравнения "<"
-  C_LE,	// Операция сравнения "<="
-  C_GT,	// Операция сравнения ">"
-  C_GE	// Операция сравнения ">="
+  C_NE,  // Операция сравнения "!="
+  C_LT,  // Операция сравнения "<"
+  C_LE,  // Операция сравнения "<="
+  C_GT,  // Операция сравнения ">"
+  C_GE  // Операция сравнения ">="
+};
+
+
+enum quotesStatuses {
+  Q_OUT,
+  Q_IN,
+  Q_END,
+  Q_DEND,
+  Q_DIN
 };
 
 // Виды арифметических операций
 enum Arithmetic {
-  A_PLUS,		//операция "+"
-  A_MINUS,	//операция "-"
-  A_MULTIPLY,	//операция "*"
-  A_DIVIDE	//операция "/"
+  A_PLUS,    //операция "+"
+  A_MINUS,  //операция "-"
+  A_MULTIPLY,  //операция "*"
+  A_DIVIDE  //операция "/"
 };
 
 // Лексический анализатор
 
-class Scanner
-{
+class Scanner {
 public:
   // Конструктор. В качестве аргумента принимает имя файла и поток,
   // из которого будут читаться символы транслируемой программы.
 
-  explicit Scanner(const string& fileName, istream& input)
-      : fileName_(fileName), lineNumber_(1), input_(input)
-  {
+  explicit Scanner(const string &fileName, istream &input)
+      : fileName_(fileName), lineNumber_(1), input_(input) {
     keywords_["begin"] = T_BEGIN;
     keywords_["end"] = T_END;
     keywords_["if"] = T_IF;
@@ -85,63 +94,56 @@ public:
     keywords_["od"] = T_OD;
     keywords_["write"] = T_WRITE;
     keywords_["writet"] = T_WRITET;
-    keywords_["writeno"]=T_WRITENO;
-    keywords_["writec"]=T_WRITEC;
-    keywords_["writect"]=T_WRITECT;
-    keywords_["writecno"]=T_WRITECNO;
+    keywords_["writeno"] = T_WRITENO;
+    keywords_["writec"] = T_WRITEC;
+    keywords_["writect"] = T_WRITECT;
+    keywords_["writecno"] = T_WRITECNO;
     keywords_["read"] = T_READ;
 
     nextChar();
   }
 
   // Деструктор
-  virtual ~Scanner()
-  {}
+  virtual ~Scanner() {}
 
   //getters всех private переменных
-  const string& getFileName() const //не используется
+  const string &getFileName() const //не используется
   {
     return fileName_;
   }
 
-  int getLineNumber() const
-  {
+  int getLineNumber() const {
     return lineNumber_;
   }
 
-  Token token() const
-  {
+  Token token() const {
     return token_;
   }
 
-  int getIntValue() const
-  {
+  int getIntValue() const {
     return intValue_;
   }
 
-  string getStringValue() const
-  {
+  string getStringValue() const {
     return stringValue_;
   }
 
-  string getSStringValue() const
-  {
+  string getSStringValue() const {
     return sstringValue_;
   }
 
-  Cmp getCmpValue() const
-  {
+  Cmp getCmpValue() const {
     return cmpValue_;
   }
 
-  Arithmetic getArithmeticValue() const
-  {
+  Arithmetic getArithmeticValue() const {
     return arithmeticValue_;
   }
 
   // Переход к следующей лексеме.
   // Текущая лексема записывается в token_ и изымается из потока.
   void nextToken();
+
 private:
 
   // Пропуск всех пробельные символы.
@@ -152,14 +154,13 @@ private:
 
   void nextChar(); //переходит к следующему символу
   //проверка переменной на первый символ (должен быть буквой латинского алфавита)
-  bool isIdentifierStart(char c)
-  {
+  bool isIdentifierStart(char c) {
     return ((c >= 'a' && c <= 'z') ||
             (c >= 'A' && c <= 'Z'));
   }
+
   //проверка на остальные символы переменной (буква или цифра)
-  bool isIdentifierBody(char c)
-  {
+  bool isIdentifierBody(char c) {
     return isIdentifierStart(c) || isdigit(c);
   }
 
@@ -170,6 +171,7 @@ private:
   Token token_; //текущая лексема
   int intValue_; //значение текущего целого
   string sstringValue_;
+  int quotes_status = Q_OUT;
   string stringValue_; //имя переменной
   Cmp cmpValue_; //значение оператора сравнения (>, <, =, !=, >=, <=)
   Arithmetic arithmeticValue_; //значение знака (+,-,*,/)
@@ -177,8 +179,9 @@ private:
   map<string, Token> keywords_; //ассоциативный массив с лексемами и
   //соответствующими им зарезервированными словами в качестве индексов
 
-  istream& input_; //входной поток для чтения из файла.
+  istream &input_; //входной поток для чтения из файла.
   char ch_; //текущий символ
+
 };
 
 #endif
