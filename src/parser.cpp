@@ -53,11 +53,23 @@ void Parser::statement() {
         codegen_->emit(STORE, newAddr);
         // codegen_->emit(STORE, newAddr+1);
         // codegen_->emit(LOAD, newAddr+1);
-        mustBe(T_RSQRPAREN);
-        mustBe(T_ASSIGN);
-        expression();
-        codegen_->emit(LOAD, newAddr);
-        codegen_->emit(BSTORE, varAddress + 1);
+        if(!see(T_RSQRPAREN))
+        {
+          std::ostringstream msg;
+          msg << tokenToString(scanner_->token()) << " found while " << tokenToString(T_RSQRPAREN) << " expected.";
+          reportError(msg.str());
+          while (!see(T_SEMICOLON) && !see(T_EOF)) {
+            next();
+          }
+        }
+        else {
+          next();
+          // mustBe(T_RSQRPAREN);
+          mustBe(T_ASSIGN);
+          expression();
+          codegen_->emit(LOAD, newAddr);
+          codegen_->emit(BSTORE, varAddress + 1);
+        }
       }
     } else {
 
@@ -139,6 +151,7 @@ void Parser::statement() {
           //mustBe(T_DQUOTE);
         }
       }
+
       else
       {
         // TODO добавить сюда
@@ -160,7 +173,6 @@ void Parser::statement() {
           codegen_->emit(STORE, varAddress);
         }
       }
-
     }
   }
     // Если встретили IF, то затем должно следовать условие. На вершине стека лежит 1 или 0 в зависимости от выполнения условия.
@@ -297,7 +309,16 @@ void Parser::factor() {
     int value = scanner_->getIntValue();
     //next();
     codegen_->emit(PUSH, value);
-    mustBe(T_QUOTE);
+    if(!see(T_QUOTE))
+    {
+      std::ostringstream msg;
+      msg << tokenToString(scanner_->token()) << " found while " << tokenToString(T_QUOTE) << " expected.";
+      reportError(msg.str());
+      while (!see(T_SEMICOLON) && !see(T_EOF)) {
+        next();
+      }
+    }
+  //  mustBe(T_QUOTE);
     // next();
   } else if (see(T_IDENTIFIER)) {
 
