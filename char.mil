@@ -1,4 +1,0 @@
-BEGIN
-	a[0] := 'A';
-	writecno(a)
-END
